@@ -1,49 +1,45 @@
-pipeline { 
-  
-   agent any
+pipeline {
+  agent any
 
-   stages {
-   
-     stage('Checkout') { 
-        steps { 
-         sh 'echo "Checkout code"'
-        }
-     }
-     
-     stage('Compile') { 
-        steps { 
-           sh 'echo "compile application..."'
+  environment {
+    CURRENT_BRANCH = "${env.BRANCH_NAME}"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        echo "Checking out code from branch: ${env.BRANCH_NAME}"
+        // git checkout or scm step can go here
+      }
+    }
+
+    stage('Compile') {
+      when {
+        anyOf {
+          branch 'Dev'
+          branch 'feature-*'
         }
       }
+      steps {
+        echo "Compiling application..."
+      }
+    }
 
-        stage('Review') { 
-        steps { 
-           sh 'echo "Review application..."'
+    stage('Test') {
+      when {
+        not {
+          branch 'prod'
         }
       }
-
-      stage('Test') { 
-        steps { 
-           sh 'echo "Test application..."'
-        }
+      steps {
+        echo "Running tests..."
       }
-         stage("Package application") { 
-         steps { 
-           sh 'echo "package application..."'
-         }
+    }
 
-     }
-  
-   	
-
-     stage("Deploy application") { 
-      
-         steps { 
-           sh 'echo "Deployment application..."'
-         }
-
-     }
-  
-   	}
-
-   }
+    stage('Deploy') {
+      steps {
+        echo "Deploying from branch: ${env.BRANCH_NAME}"
+      }
+    }
+  }
+}
