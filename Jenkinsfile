@@ -1,41 +1,33 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven3' // Configure this in Jenkins Global Tools
+    }
+
     environment {
-        MAVEN_HOME = tool 'Maven 3' // This name must match the one in Jenkins tool config
-        PATH = "${MAVEN_HOME}/bin:${env.PATH}"
+        IMAGE_NAME = 'addressbook-app-image'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repo') {
             steps {
                 git branch: 'Dev', url: 'https://github.com/Azharhashmi111/MultiBranchDemo.git'
             }
         }
 
-        stage('Build with Maven') {
+        stage('Build WAR') {
             steps {
                 sh 'mvn clean package'
             }
         }
 
-        stage('Deploy to Tomcat') {
+        stage('Build Docker Image') {
             steps {
-                sh '''
-                    curl -T target/*.war \
-                    --user jenkins:jenkinspass \
-                    "http://34.123.227.154:8080/manager/text/deploy?path=/TomcatDeployment&update=true"
-                '''
+                script {
+                    docker.build("${IMAGE_NAME}")
+                }
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Build or deployment failed.'
         }
     }
 }
